@@ -1,3 +1,14 @@
+/* tarheel.c
+Tar Heel SHell
+COMP 530 Lab 1
+
+Audrey Sharp (aud), PID 720473458
+Joshua Smith (joshuals), PID 720457161
+
+UNC Honor Pledge: I certify that no unauthorized assistance has been received or
+given in the completion of this work
+*/
+
 #include <stdio.h>
 
 char tarheel[] = 

@@ -1,4 +1,5 @@
-/* Tar Heel SHell 
+/* thsh.c
+Tar Heel SHell 
 COMP 530 Lab 1
 
 Audrey Sharp (aud), PID 720473458
@@ -86,78 +87,76 @@ int main (int argc, char **argv, char **envp) { //same as "int main (int argc, c
     int i = 0;
     char *input[MAX_INPUT];
     char *output[MAX_INPUT];
-    char *pipes[MAX_INPUT];
+    char *pipeCommands[MAX_INPUT];
+    int numPipes; // counter for pipe
 
     // reset input/output/pipe vars
     input[0] = NULL;
     output[0] = NULL;
     int k = 0;
-    /*for (k=0; k<j; k++) {
-      pipes[k] = NULL;
-    }*/
+    for (k=0; k<20; k++) {
+      pipeCommands[k] = NULL;
+    }
 
-    int j = 0; // counter for pipe
+    numPipes = 0;
     int in = 0; // boolean values for exec() later on
     int out = 0;
-    int pipe = 0;
+    int pipeFlag = 0;
     int changeOutput = 0;
 
     char *temp;
     temp = strtok(cmd, " =\n\t"); // split input by space, =, newline, and tab
-    while (temp != NULL) {
+      while (temp != NULL) {
+       // printf("temp:%s\n", temp);
         if (strstr(temp, "<") != NULL || strstr(temp, ">") != NULL || strstr(temp, "|") != NULL) {
           if (strstr(temp, "<") != NULL) {
             in = 1;
-          if (temp[1] != '\0') { // no space between < and input file
-            input[0] = temp+1; // temp+1 to get rid of < at beginning of string
-          } else {
-            temp = strtok(NULL, " =\n\t");
-            continue;
-          }
-        } else if (strstr(temp, ">") != NULL) {
-          out = 1;
-          if (temp[0] != '>') { // number in front of >
-            if (temp[0] == '2') {
-              changeOutput = 1; // redirect to stderr
+            if (temp[1] != '\0') { // no space between < and input file
+              input[0] = temp+1; // temp+1 to get rid of < at beginning of string
+            } else {
+              temp = strtok(NULL, " =\n\t");
+              continue;
             }
-            if (temp[2] != '\0') {
-              output[0] = temp+2;  
+          } else if (strstr(temp, ">") != NULL) {
+            out = 1;
+            if (temp[0] != '>') { // number in front of >
+              if (temp[0] == '2') {
+                changeOutput = 1; // redirect to stderr
+              }
+              if (temp[2] != '\0') {
+                output[0] = temp+2;  
+              }
+            } else if (temp[1] != '\0') {
+              output[0] = temp+1;
+            } else {
+              temp = strtok(NULL, " =\n\t");
+              continue;
             }
-          } else if (temp[1] != '\0') {
-            output[0] = temp+1;
-          } else {
-            temp = strtok(NULL, " =\n\t");
-            continue;
-          }
-        } else if (strstr(temp, "|") != NULL) {
-          pipe = 1;
-          if (temp[1] != '\0') {
-            pipes[j] = temp+1;
-            j++;
-          } else {
-            temp = strtok(NULL, " =\n\t");
-            continue;
+          } else if (strstr(temp, "|") != NULL) {
+            pipeFlag = 1;
+            numPipes++;
+            execute[i] = "\0"; // delimit commands with + for parsing later
+            i++;
+            if (temp[1] != '\0') {
+              execute[i] = temp+1;
+              i++;
+            } else {
+              temp = strtok(NULL, " =\n\t");
+              continue;
+            }
           }
         }
+        if (in && input[0] == NULL) { // space between < and input file; put file in input[0]
+          input[0] = temp;
+        } else if (out && output[0] == NULL) {
+          output[0] = temp;
+        } else if (in || out) {
+        } else {
+          execute[i] = temp;
+          i++;
+        }
+        temp = strtok(NULL, " =\n\t"); // NULL used to get token from previous string
       }
-      if (in && input[0] == NULL) { // space between < and input file; put file in input[0]
-        input[0] = temp;
-      } else if (out && output[0] == NULL) {
-        output[0] = temp;
-      } else if (pipe && pipes[j] == NULL) {
-        pipes[j] = temp;
-        printf("input %sx ", pipes[j]);
-        j++;
-      } else if (in || out || pipe) {
-      } else {
-        //printf("putting in exec:%s\n", temp);
-        execute[i] = temp;
-        i++;
-      }
-
-      temp = strtok(NULL, " =\n\t"); // NULL used to get token from previous string
-      
-    }
     execute[i] = NULL; // null terminate string
 
     // Execute the command, handling built-in commands separately 
@@ -231,54 +230,135 @@ int main (int argc, char **argv, char **envp) { //same as "int main (int argc, c
             setenv(execute[1], execute[2], 1);
         }
         continue;
-    } else if (strcmp(execute[0], "jobs") == 0) {
-
+    }/* else if (strcmp(execute[0], "jobs") == 0) {
+      //execute[0] = "ps";
+      //execute[1] = '\0';
     } else if (strcmp(execute[0], "fg") == 0) { // make job x go to foreground
 
     } else if (strcmp(execute[0], "bg") == 0) { // make job x go to background
 
-    }
+    }*/
     
-    pid_t pid = fork();
-    if (pid == 0) {
-      if (in) {
-        int inputTemp = open(input[0], O_RDONLY);
-        dup2(inputTemp, STDIN_FILENO);
-        close(inputTemp);
-      }
-      if (out) {
-        int outputTemp = creat(output[0], 777);
-        if (changeOutput) { // output STDERR
-          dup2(outputTemp, STDERR_FILENO);
-        } else {
-          dup2(outputTemp, STDOUT_FILENO);
-        }
-        close(outputTemp);
-      }
-      /*if (pipe) {
-        pipe(pipes);
-        dup2(pipes[0], 0);
-        close(pipes[1]);
+    if (pipeFlag) {
+      // I don't know enough about computer science to get piping to work. I give up.
+      printf("Piping...\n");
+      //runPipes(execute, numPipes);
+      //runPipes(execute, pipeCommands, numPipes);
+      //int pipes[numPipes*2];
+
+      /*int b;
+      for (b=0; b<numPipes; b++) { // set up pipes and parse commands
+        int tempB = b*2;
+        pipe(pipes[tempB]);
       }*/
 
-      //printf("%s %s \n", execute[0], execute[1]);
-      int temp = execvp(execute[0], execute);
-      if (temp == -1) {
-        fprintf(stderr, "Error - command not found\n");
+      /*int a;
+      int c; // for loop to close pipes
+      for (a=0; a<numPipes+1; a++) { // # of commands to execute = pipes+1
+        pipe(pipes[a*2]);
+        pid_t pid = fork();
+        if (pid == 0) {
+          if (in) {
+            int inputTemp = open(input[0], O_RDONLY);
+            dup2(inputTemp, STDIN_FILENO);
+            close(inputTemp);
+          }
+          if (out) {
+            int outputTemp = creat(output[0], 777);
+            if (changeOutput) { // output STDERR
+              dup2(outputTemp, STDERR_FILENO);
+            } else {
+              dup2(outputTemp, STDOUT_FILENO);
+            }
+            close(outputTemp);
+          }
+          if (a == 0) {
+            dup2(pipes[a+1], STDOUT_FILENO);
+            for (c=0; c<numPipes*2; c++) {
+              close(pipes[c]);
+            }
+          } else if (numPipes > 1 && a > 0) {
+            dup2(pipes[a], STDIN_FILENO);
+            dup2(pipes[a+2], STDOUT_FILENO);
+            for (c=0; c<numPipes*2; c++) {
+              close(pipes[c]);
+            }
+          } else if (a == numPipes) {
+            dup2(pipes[numPipes], STDIN_FILENO);
+            for (c=0; c<numPipes*2; c++) {
+              close(pipes[c]);
+            }
+          }
+
+          // parse commands
+          int d;
+          if (a>0) { // get second/third/etc set of commands
+            for (d=0; d<i; d++) {
+              if (execute[d] == '\0') {
+                execute[0] = execute[d+1];
+                break;
+              }
+            }
+          }
+          for (d=0; d<i; d++) { // cut off commands to go to exec()
+            if (execute[d] == '+') {
+              execute[d] == '\0';
+              break;
+            }
+          }
+
+          printf("%s %s \n", execute[0], execute[1]);
+          int temp = execvp(execute[0], execute);
+          if (temp == -1) {
+            fprintf(stderr, "Error - command not found\n");
+            break;
+          }
+        } else if (pid < 0) {
+          fprintf(stderr, "Error - fork failed\n");
+          break;
+        } else {
+          wait(&rv);
+        }
+      }*/
+    }
+      pid_t pid = fork();
+      if (pid == 0) {
+        if (in) {
+          int inputTemp = open(input[0], O_RDONLY);
+          dup2(inputTemp, STDIN_FILENO);
+          close(inputTemp);
+        }
+        if (out) {
+          int outputTemp = creat(output[0], 777);
+          if (changeOutput) { // output STDERR
+            dup2(outputTemp, STDERR_FILENO);
+          } else {
+            dup2(outputTemp, STDOUT_FILENO);
+          }
+          close(outputTemp);
+        }
+
+        //printf("%s %s \n", execute[0], execute[1]);
+        int temp = execvp(execute[0], execute);
+        if (temp == -1) {
+          fprintf(stderr, "Error - command not found\n");
+          break;
+        }
+      } else if (pid < 0) {
+        fprintf(stderr, "Error - fork failed\n");
+        break;
+      } else {
+        wait(&rv);
       }
-    } else if (pid < 0) {
-      fprintf(stderr, "Error - fork failed\n");
-    } else {
-      wait(&rv);
+    
       
       //change the value of the int return variable to a char array in order to use setenv
       sprintf(rv_char, "%d", WEXITSTATUS(rv));
       setenv("?", rv_char, 1);
-    }
 
-    if (debug) {
-      fprintf(stderr, "ENDED: %s (ret=%d)\n", execute[0], WEXITSTATUS(rv));
-    }
+      if (debug) {
+        fprintf(stderr, "ENDED: %s (ret=%d)\n", execute[0], WEXITSTATUS(rv));
+      }
   }
 
   return 0;
